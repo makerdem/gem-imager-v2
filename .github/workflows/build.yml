@@ -36,6 +36,7 @@ jobs:
             export Qt6_ROOT="$Qt6_DIR"
             export QMAKE="$Qt6_DIR/bin/qmake"
             export LD_LIBRARY_PATH="$Qt6_DIR/lib"
+            export PKG_CONFIG_PATH="/usr/lib/x86_64-linux-gnu/pkgconfig:/usr/lib/pkgconfig:/usr/share/pkgconfig"
 
             sed -i "s@Qt6_ROOT=.*@Qt6_ROOT=\"$Qt6_ROOT\"@" appimagecraft.yml
             sed -i "s@QMAKE: .*@QMAKE: \"$QMAKE\"@" appimagecraft.yml
