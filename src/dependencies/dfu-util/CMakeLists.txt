@@ -51,12 +51,21 @@ if(WIN32)
     set(LIBUSB_FOUND TRUE)
 
 else()
-    # Linux/macOS: Use system libusb via pkg-config
-    find_package(PkgConfig REQUIRED)
-    pkg_check_modules(LIBUSB REQUIRED libusb-1.0>=1.0.0)
+    # Linux/macOS: Find libusb-1.0
+    find_package(PkgConfig QUIET)
+    if(PkgConfig_FOUND)
+        pkg_check_modules(LIBUSB libusb-1.0>=1.0.0)
+    endif()
 
     if(NOT LIBUSB_FOUND)
-        message(FATAL_ERROR "libusb-1.0 not found. Please install libusb-1.0-dev (Debian/Ubuntu) or libusb-devel (Fedora/RHEL)")
+        # Fallback: find manually without pkg-config
+        find_path(LIBUSB_INCLUDE_DIRS libusb.h PATH_SUFFIXES libusb-1.0)
+        find_library(LIBUSB_LIBRARIES NAMES usb-1.0 usb)
+        if(LIBUSB_INCLUDE_DIRS AND LIBUSB_LIBRARIES)
+            set(LIBUSB_FOUND TRUE)
+        else()
+            message(FATAL_ERROR "libusb-1.0 not found. Please install libusb-1.0-0-dev (Debian/Ubuntu) or libusb-devel (Fedora/RHEL)")
+        endif()
     endif()
 endif()
 
