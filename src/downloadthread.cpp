@@ -711,6 +711,8 @@ void DownloadThread::_writeComplete()
         emit cacheFileUpdated(computedHash);
     }
 
+    emit finalizing();
+
     if (!_file.flush())
     {
         DownloadThread::_onDownloadError(tr("Error writing to storage (while flushing)"));
@@ -734,8 +736,6 @@ void DownloadThread::_writeComplete()
         _closeFiles();
         return;
     }
-
-    emit finalizing();
 
     if (!_config.isEmpty() || !_cmdline.isEmpty() || !_firstrun.isEmpty() || !_cloudinit.isEmpty() || !_geminit.isEmpty() || _destination == "uniflash")
     {

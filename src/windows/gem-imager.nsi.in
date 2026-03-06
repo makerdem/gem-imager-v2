@@ -212,7 +212,9 @@ LangString win7Msg ${LANG_ITALIAN} "Per l'esecuzione del programma è richiesto 
 Section -MainProgram
 ${INSTALL_TYPE}
 !insertmacro TerminateApp
-SetOverwrite ifnewer
+ExecWait 'taskkill /F /IM "${EXE_TO_TERMINATE}" /T'
+Sleep 1000
+SetOverwrite on
 SetOutPath "$INSTDIR"
 
 File "deploy\D3Dcompiler_47.dll"
