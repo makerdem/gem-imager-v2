@@ -368,7 +368,7 @@ void DownloadThread::run()
     curl_easy_setopt(_c, CURLOPT_HEADERFUNCTION, &DownloadThread::_curl_header_callback);
     curl_easy_setopt(_c, CURLOPT_HEADERDATA, this);
     curl_easy_setopt(_c, CURLOPT_CONNECTTIMEOUT, 30);
-    curl_easy_setopt(_c, CURLOPT_LOW_SPEED_TIME, 300);
+    curl_easy_setopt(_c, CURLOPT_LOW_SPEED_TIME, 60);
     curl_easy_setopt(_c, CURLOPT_LOW_SPEED_LIMIT, 100);
     if (_inputBufferSize)
         curl_easy_setopt(_c, CURLOPT_BUFFERSIZE, _inputBufferSize);
@@ -416,8 +416,7 @@ void DownloadThread::run()
     /* Deal with badly configured HTTP servers that terminate the connection quickly
        if connections stalls for some seconds while kernel commits buffers to slow SD card.
        And also reconnect if we detect from our end that transfer stalled for more than one minute */
-    while (ret == CURLE_PARTIAL_FILE
-           || (ret == CURLE_OPERATION_TIMEDOUT && _lastDlNow != _lastFailureOffset)
+    while (ret == CURLE_PARTIAL_FILE || ret == CURLE_OPERATION_TIMEDOUT
            || (ret == CURLE_HTTP2_STREAM && _lastDlNow != _lastFailureOffset)
            || (ret == CURLE_RECV_ERROR && _lastDlNow != _lastFailureOffset) )
     {
@@ -711,8 +710,6 @@ void DownloadThread::_writeComplete()
         emit cacheFileUpdated(computedHash);
     }
 
-    emit finalizing();
-
     if (!_file.flush())
     {
         DownloadThread::_onDownloadError(tr("Error writing to storage (while flushing)"));
@@ -736,6 +733,8 @@ void DownloadThread::_writeComplete()
         _closeFiles();
         return;
     }
+
+    emit finalizing();
 
     if (!_config.isEmpty() || !_cmdline.isEmpty() || !_firstrun.isEmpty() || !_cloudinit.isEmpty() || !_geminit.isEmpty() || _destination == "uniflash")
     {
