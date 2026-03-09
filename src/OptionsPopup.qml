@@ -36,7 +36,6 @@ Window {
     property string cloudinitrun
     property string cloudinitwrite
     property string cloudinitnetwork
-    property string savedPasswordCrypt6: ""
 
     signal saveSettingsSignal(var settings)
 
@@ -841,9 +840,6 @@ Window {
             fieldUserPassword.text = settings.sshUserPassword
             fieldUserPassword.alreadyCrypted = true
             chkSetUser.checked = true
-            if ('sshUserPasswordCrypt6' in settings) {
-                savedPasswordCrypt6 = settings.sshUserPasswordCrypt6
-            }
             /* Older imager versions did not have a sshEnabled setting.
                Assume it is true if it does not exists and sshUserPassword is set */
             if (!('sshEnabled' in settings) || settings.sshEnabled === "true" || settings.sshEnabled === true) {
@@ -961,25 +957,6 @@ Window {
             fieldWifiPassword.passwordCharacter = bulletCharacter;
         }
 
-        if ('vncEnabled' in settings) {
-            chkVNC.checked = settings.vncEnabled === true || settings.vncEnabled === "true"
-        }
-        if ('storageGadgetEnabled' in settings) {
-            chkStorageGadget.checked = settings.storageGadgetEnabled === true || settings.storageGadgetEnabled === "true"
-        }
-        if ('ethernetGadgetEnabled' in settings) {
-            chkEthernetGadget.checked = settings.ethernetGadgetEnabled === true || settings.ethernetGadgetEnabled === "true"
-        }
-        if ('serialGadgetsEnabled' in settings) {
-            chkSerialGadgets.checked = settings.serialGadgetsEnabled === true || settings.serialGadgetsEnabled === "true"
-        }
-        if ('diskEncryptEnabled' in settings) {
-            chkSetEncrypt.checked = settings.diskEncryptEnabled === true || settings.diskEncryptEnabled === "true"
-        }
-        if ('sdToEmmcEnabled' in settings) {
-            chkSdToEmmcFB.checked = settings.sdToEmmcEnabled === true || settings.sdToEmmcEnabled === "true"
-        }
-
         initialized = true
     }
 
@@ -1076,16 +1053,11 @@ Window {
 
             var cryptedPassword;
             if (chkSetUser.checked) {
-                if (fieldUserPassword.alreadyCrypted) {
-                    cryptedPassword = fieldUserPassword.text
-                } else {
-                    cryptedPassword = imageWriter.crypt(fieldUserPassword.text)
-                    savedPasswordCrypt6 = imageWriter.crypt6(fieldUserPassword.text)
-                }
+                cryptedPassword = fieldUserPassword.alreadyCrypted ? fieldUserPassword.text : imageWriter.crypt(fieldUserPassword.text)
                 addCloudInit("  lock_passwd: false")
                 addCloudInit("  passwd: "+cryptedPassword)
 
-                addGemInit("userpasswd='"+savedPasswordCrypt6+"'")
+                addGemInit("userpasswd='"+imageWriter.crypt6(fieldUserPassword.text)+"'")
             }
 
             if (chkSSH.checked && radioPubKeyAuthentication.checked) {
@@ -1279,16 +1251,7 @@ Window {
         }
         if (chkSetUser.checked) {
             settings.sshUserName = fieldUserName.text
-            if (fieldUserPassword.alreadyCrypted) {
-                settings.sshUserPassword = fieldUserPassword.text
-                settings.sshUserPasswordCrypt6 = savedPasswordCrypt6
-            } else {
-                settings.sshUserPassword = imageWriter.crypt(fieldUserPassword.text)
-                settings.sshUserPasswordCrypt6 = imageWriter.crypt6(fieldUserPassword.text)
-                savedPasswordCrypt6 = settings.sshUserPasswordCrypt6
-            }
-        }
-        if (fieldVncPassword.text.length > 0) {
+            settings.sshUserPassword = fieldUserPassword.alreadyCrypted ? fieldUserPassword.text : imageWriter.crypt(fieldUserPassword.text)
             settings.vncPassword = fieldVncPassword.text
         }
 
@@ -1322,15 +1285,10 @@ Window {
             settings.keyboardLayout = fieldKeyboardLayout.editText
         }
 
-        settings.vncEnabled = chkVNC.checked
-        settings.storageGadgetEnabled = chkStorageGadget.checked
-        settings.ethernetGadgetEnabled = chkEthernetGadget.checked
-        settings.serialGadgetsEnabled = chkSerialGadgets.checked
-        settings.diskEncryptEnabled = chkSetEncrypt.checked
-        settings.sdToEmmcEnabled = chkSdToEmmcFB.checked
-
-        hasSavedSettings = true
-        saveSettingsSignal(settings)
+        if (chkHostname.checked || chkSetUser.checked || chkSSH.checked || chkWifi.checked || chkLocale.checked) {
+            hasSavedSettings = true
+            saveSettingsSignal(settings)
+        }
     }
 
     function clearCustomizationFields()
